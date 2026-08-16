@@ -1,0 +1,4 @@
+# Verification-only overlay: this unrelated client bundle currently does not
+# register itself through __ModuleLoader__.load and blocks all browser plugins.
+- id: file-drop-attachments
+  disabled: true
