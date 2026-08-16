@@ -1,27 +1,103 @@
 # dsh-code-review
 
-DeepSeek Harness Web plugin providing a Codex-style code-change review flow:
+[![DSH Plugin](https://img.shields.io/badge/DeepSeek%20Harness-plugin-4f7cff)](https://github.com/topics/dsh-plugin)
+[![License: GPL-3.0-only](https://img.shields.io/github/license/CooStack/dsh-code-review)](LICENSE)
 
-- a top-right `变更` session utility that opens a resizable right sidebar while keeping the conversation visible;
-- plugin-owned sidebar sizing, persisted at 720px by default and draggable past the shell's former 520px cap up to the physical frame boundary;
-- automatic left-navigation collapse when a narrow window needs that space for the sidebar, restored when the sidebar closes;
-- a compact per-turn summary node whose file rows open the matching turn and file inside the sidebar;
-- parent-session projection of edits made by ordinary subagents and workflow children, which all write to the same workspace immediately and require no merge step;
-- file-level add/remove totals, line-numbered unified diffs, omitted-line markers, and an explicit command to open the selected source file;
-- a focused one-file diff on the left and a searchable workspace-relative directory tree on the right, including single-child path compression and a separately persisted draggable divider;
-- a DSH Menu turn filter with a dedicated empty state instead of a native empty select;
-- plugin-owned Shiki syntax highlighting that tokenizes complete old/new files and maps tokens back to diff lines, preserving multiline grammar state;
-- independent light and dark Codex-style palettes inside Settings > Plugins > Plugin Configuration > dsh-code-review, with controls for 12 syntax categories and 14 diff, gutter, and omitted-region colors;
-- the font setting in the same dsh-code-review plugin card: it enumerates Chromium Local Font Access families on demand, keeps Microsoft YaHei as the default/fallback, typing only reorders the candidate menu toward the best match, while clicking a candidate or pressing Enter applies it;
-- guarded per-turn undo using the full `write` / `edit` before-and-after snapshots and each owning session's resolved sandbox policy;
-- content-chain reconstruction for concurrent same-file edits, with undo refusal for ambiguous chains, active parent/child agents, or files modified after the recorded write.
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+A community DeepSeek Harness Web plugin for reviewing code changes turn by turn. It adds a Codex-style change summary, a resizable diff sidebar, a workspace-relative file tree, syntax highlighting, and guarded undo for safe iteration in a shared workspace.
+
+This is an independent community plugin. It is not an official DeepSeek product and does not imply DeepSeek endorsement.
+
+## Highlights
+
+- **Turn-level review** — See added and removed line totals, open a completed turn from the conversation, and jump between changed files without leaving the chat.
+- **Code and file tree together** — Inspect the selected unified diff on the left and a searchable, workspace-relative file tree on the right. The inner divider is independently draggable and persisted.
+- **Large, practical sidebar** — Resize the review sidebar beyond the shell's former 520px cap. The layout collapses the left navigation when a narrow window needs the space and restores it when the review closes.
+- **Parent and child aggregation** — Changes recorded by ordinary subagents and workflow children are projected into the parent review. All agents write to the same workspace immediately; no artificial merge step is introduced.
+- **Syntax-aware diffs** — Plugin-owned Shiki highlighting tokenizes complete old and new files before mapping tokens back to diff rows, so multiline comments and strings keep their grammar state.
+- **Light and dark palettes** — Configure syntax, diff, gutter, and omitted-line colors separately for light and dark themes.
+- **Font control that does not surprise you** — Type to move the best matching font candidate to the top of the menu. A font is applied only after clicking a candidate or pressing Enter. System font families can be loaded on demand through Chromium Local Font Access.
+- **Guarded undo** — Undo uses recorded before-and-after snapshots, resolved sandbox policy, filesystem version guards, and exact same-file content chains. Ambiguous, stale, or active-agent changes are refused instead of overwritten.
+- **Native DSH integration** — Uses DSH conversation nodes, session utility slots, settings plugin cards, theme events, and the DSH `Menu` primitive rather than replacing the host shell.
 
 ## Install
 
-Add the package as a linked dependency and bundle in the active DSH profile, then restart DSH so the Host and Client plugin graph are rebuilt.
+The repository contains the prebuilt client bundle, so a GitHub source install is enough:
 
-The plugin persists reversible snapshots under `${DSH_HOME:-~/.dsh}/code-review/`. Historical tool results from before installation remain reviewable when their durable result metadata contains diffs, but cannot be undone because the full file snapshot was not retained.
+```bash
+dsh plugin --profile web add github:CooStack/dsh-code-review#main
+```
 
-## Safety
+Restart the DSH Web profile after installation so the Host and Client plugin graph is rebuilt.
 
-Undo never runs while the parent agent or any owning descendant is active. Same-file records are ordered by an exact `before -> after` content chain rather than callback timestamps; broken or ambiguous chains return a conflict. Every affected file is preflighted against its recorded final content, existing files use the filesystem provider's version guard, and conflicts are reported without overwriting newer work.
+To install a local checkout while developing:
+
+```bash
+git clone https://github.com/CooStack/dsh-code-review.git
+dsh plugin --profile web add file:./dsh-code-review
+```
+
+The profile command forwards the package to the profile's package manager. To remove it:
+
+```bash
+dsh plugin --profile web remove dsh-code-review
+```
+
+## Use
+
+After restarting DSH Web, completed turns with recorded changes expose the `变更` utility in the conversation header. Open it to review the selected turn, search the file tree, inspect a unified diff, or open the source file in the workspace.
+
+The conversation summary node also exposes changed files. Selecting a file opens the matching turn and path in the review sidebar.
+
+## Settings
+
+Open:
+
+```text
+设置 -> 插件 -> 插件配置 -> dsh-code-review
+```
+
+The card is collapsed by default and contains both settings groups:
+
+- **Font** — Load system fonts, type to reorder candidates, then click or press Enter to apply one. Typing and clearing a draft never changes the currently applied font.
+- **Code highlighting** — Edit light and dark palettes independently, reset one palette, reset all overrides, and preview the resulting colors before returning to a diff.
+
+The plugin applies the code font only to its diff renderers. Preferences are stored in the DSH browser storage namespace owned by this plugin.
+
+## Undo safety
+
+Undo is intentionally conservative:
+
+- It never runs while the parent agent or an owning descendant is active.
+- Every file is preflighted against the recorded final content before a write is attempted.
+- Existing files use the filesystem provider's version guard.
+- Concurrent same-file writes are ordered through an exact `before -> after` content chain, not callback timestamps.
+- Broken chains, ambiguous same-baseline writes, external edits, and stale snapshots return a conflict without overwriting newer work.
+- Historical results from before installation can be displayed when durable diff metadata exists, but they cannot be undone without complete file snapshots.
+
+Reversible snapshots are stored under:
+
+```text
+${DSH_HOME:-~/.dsh}/code-review/
+```
+
+## Development
+
+```bash
+npm install
+npm test
+npm run build
+```
+
+`npm test` covers host-side aggregation and undo safety, client registration and layout behavior, and detailed highlighter token categories. `npm run build` regenerates `lib/client.bundle.js`, the bundle consumed by the DSH Web client.
+
+## Scope and privacy
+
+The plugin does not add a telemetry client, credentials flow, or background network service. Its host side records review metadata and snapshots through DSH services; its client side uses the active DSH theme and, when requested, the browser's local font enumeration API.
+
+## License
+
+Copyright (C) 2026 CooStack.
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE) (`GPL-3.0-only`).
