@@ -9,6 +9,10 @@
 
 这是独立的社区插件，不是 DeepSeek 官方产品，也不代表 DeepSeek 的认可或背书。
 
+<p align="center">
+  <img width="2255" height="812" alt="dsh-code-review 变更审查侧栏演示" src="https://github.com/user-attachments/assets/19f7bfd7-aef0-490d-87ac-d7a8321eb2d9">
+</p>
+
 ## 功能
 
 - **逐回合审查**：查看新增和删除行数，从会话中打开已完成回合，并在不离开聊天页面的情况下切换变更文件。

@@ -10,6 +10,10 @@ A community DeepSeek Harness Web plugin for reviewing code changes turn by turn.
 
 This is an independent community plugin. It is not an official DeepSeek product and does not imply DeepSeek endorsement.
 
+<p align="center">
+  <img width="2255" height="812" alt="dsh-code-review change review sidebar" src="https://github.com/user-attachments/assets/19f7bfd7-aef0-490d-87ac-d7a8321eb2d9">
+</p>
+
 ## Highlights
 
 - **Turn-level review** — See added and removed line totals, open a completed turn from the conversation, and jump between changed files without leaving the chat.
