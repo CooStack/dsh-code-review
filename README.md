@@ -4,6 +4,7 @@
 [![License: GPL-3.0-only](https://img.shields.io/github/license/CooStack/dsh-code-review)](LICENSE)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+<img width="2255" height="812" alt="image" src="https://github.com/user-attachments/assets/19f7bfd7-aef0-490d-87ac-d7a8321eb2d9" />
 
 A community DeepSeek Harness Web plugin for reviewing code changes turn by turn. It adds a Codex-style change summary, a resizable diff sidebar, a workspace-relative file tree, syntax highlighting, and guarded undo for safe iteration in a shared workspace.
 
