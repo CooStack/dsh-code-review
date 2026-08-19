@@ -285,8 +285,15 @@ await evaluate(`(() => {
   return Boolean(target);
 })()`);
 await new Promise((resolve) => setTimeout(resolve, 500));
+const reviewSettingsCardOpened = await evaluate(`(() => {
+  const card = [...document.querySelectorAll('button')].find((node) => node.getAttribute('aria-label')?.endsWith(': dsh-code-review'));
+  if (card?.getAttribute('aria-expanded') !== 'true') card?.click();
+  return card?.getAttribute('aria-expanded') === 'true' || card !== undefined;
+})()`);
+await new Promise((resolve) => setTimeout(resolve, 300));
 const settingsView = await evaluate(`(() => {
-  const root = document.querySelector('.dcr-pluginCard');
+  const fontInput = document.querySelector('input[aria-label="变更代码字体"]');
+  const root = fontInput?.closest('li') ?? [...document.querySelectorAll('li')].find((node) => node.innerText.includes('dsh-code-review'));
   return {
     entryPresent: root?.innerText.includes('dsh-code-review') ?? false,
     fontPresent: root?.innerText.includes('变更代码字体') ?? false,
@@ -299,6 +306,7 @@ const settingsView = await evaluate(`(() => {
     topHighlightTabPresent: [...document.querySelectorAll('[role="tab"]')].some((node) => node.textContent.trim() === '代码高亮'),
     generalFontCount: [...document.querySelectorAll('input[aria-label="变更代码字体"]')].filter((node) => !root?.contains(node)).length,
     settingsOpened: ${settingsOpened},
+    reviewSettingsCardOpened: ${reviewSettingsCardOpened},
   };
 })()`);
 await evaluate(`(() => {

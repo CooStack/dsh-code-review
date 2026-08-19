@@ -4,6 +4,7 @@
 [![License: GPL-3.0-only](https://img.shields.io/github/license/CooStack/dsh-code-review)](LICENSE)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+<img width="2255" height="812" alt="image" src="https://github.com/user-attachments/assets/19f7bfd7-aef0-490d-87ac-d7a8321eb2d9" />
 
 A community DeepSeek Harness Web plugin for reviewing code changes turn by turn. It adds a Codex-style change summary, a resizable diff sidebar, a workspace-relative file tree, syntax highlighting, and guarded undo for safe iteration in a shared workspace.
 
@@ -67,7 +68,7 @@ The card is collapsed by default and contains both settings groups:
 - **Font** — Load system fonts, type to reorder candidates, then click or press Enter to apply one. Typing and clearing a draft never changes the currently applied font.
 - **Code highlighting** — Edit light and dark palettes independently, reset one palette, reset all overrides, and preview the resulting colors before returning to a diff.
 
-The plugin applies the code font only to its diff renderers. Preferences are stored in the DSH browser storage namespace owned by this plugin.
+The plugin applies the code font only to its diff renderers. The selected font and highlighter overrides are persisted through the DSH `code-review` settings namespace; layout dimensions remain browser-local preferences. Existing browser-local palette data is retained only as a compatibility fallback.
 
 ## Undo safety
 

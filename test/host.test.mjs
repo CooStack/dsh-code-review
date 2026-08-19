@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Readable } from "node:stream";
 import {
+  apply,
+  Config,
+  inject,
   buildReviewState,
   buildUnifiedDiff,
   createLedgerRuntime,
@@ -106,6 +110,72 @@ async function withRuntime(run, initial) {
     await rm(storage, { recursive: true, force: true });
   }
 }
+
+test("host plugin registers the font setting in the durable settings namespace", async () => {
+  let registration;
+  const ctx = {
+    agents: { list() { return []; } },
+    settings: {
+      register(namespace, schema, options) {
+        registration = { namespace, schema, options };
+        return {};
+      },
+    },
+    on() { return () => {}; },
+    effect(installer) { return installer(); },
+    webServer: { register() { return () => {}; } },
+  };
+
+  await apply(ctx);
+
+  assert.deepEqual(inject, ["agents", "fs", "webServer", "sandboxPolicy", "settings"]);
+  assert.deepEqual(Config({}), { fontFamily: "Microsoft YaHei", highlightOverrides: "" });
+  assert.equal(registration.namespace, "code-review");
+  assert.equal(registration.schema, Config);
+  assert.equal(registration.options.applies, "live");
+  assert.deepEqual(registration.options.base, { fontFamily: "Microsoft YaHei", highlightOverrides: "" });
+});
+
+
+test("host config API persists font and highlight settings", async () => {
+  let value = Config({});
+  const handlers = new Map();
+  const scope = {
+    get() { return value; },
+    async replace(next) { value = Config(next); },
+  };
+  const ctx = {
+    agents: { list() { return []; } },
+    settings: { register() { return scope; } },
+    on() { return () => {}; },
+    effect(installer) { return installer(); },
+    webServer: {
+      register(route) { handlers.set(route.path, route.handler); return () => {}; },
+    },
+  };
+  await apply(ctx);
+  const handler = handlers.get("/api/dsh-code-review/config");
+  assert.equal(typeof handler, "function");
+
+  const request = Object.assign(Readable.from([JSON.stringify({
+    fontFamily: "Consolas",
+    highlightOverrides: '{"version":1,"light":{},"dark":{}}',
+  })]), {
+    method: "PUT",
+    url: "/api/dsh-code-review/config",
+    headers: { host: "127.0.0.1", "x-dsh-code-review": "1" },
+  });
+  const response = {
+    headers: new Map(),
+    setHeader(name, next) { this.headers.set(name.toLowerCase(), next); },
+    end(body) { this.body = body; },
+  };
+  await handler(request, response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(value.fontFamily, "Consolas");
+  assert.deepEqual(JSON.parse(response.body).config, value);
+});
 
 test("normalizeDiffs rejects malformed wire entries", () => {
   assert.deepEqual(normalizeDiffs(undefined), []);
